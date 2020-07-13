@@ -10,9 +10,7 @@ import javax.ws.rs.NotFoundException;
 
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
-import gg.signal9.mqtttest.SensorService.SensorZone;
-
-
+import gg.signal9.mqtttest.models.SensorZone;
 
 @Path("/zone")
 @Produces(MediaType.APPLICATION_JSON)

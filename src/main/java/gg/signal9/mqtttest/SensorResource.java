@@ -10,7 +10,7 @@ import javax.ws.rs.NotFoundException;
 
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
-import gg.signal9.mqtttest.SensorService.Sensor;
+import gg.signal9.mqtttest.models.Sensor;
 
 
 
