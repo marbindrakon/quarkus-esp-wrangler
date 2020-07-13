@@ -27,9 +27,9 @@ public class SensorResource {
 
     @Path("/{chipId}")
     @GET
-    public Sensor sensor(@PathParam int sensorId){
+    public Sensor sensor(@PathParam int chipId){
         for (Sensor candidate : sensorService.fleet.sensors){
-            if (candidate.chipId == sensorId){
+            if (candidate.chipId == chipId){
                 return candidate;
             }
         }
