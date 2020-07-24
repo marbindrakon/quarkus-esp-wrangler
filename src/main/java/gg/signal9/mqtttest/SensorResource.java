@@ -10,7 +10,7 @@ import javax.ws.rs.NotFoundException;
 
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
-import gg.signal9.mqtttest.models.Sensor;
+import gg.signal9.mqtttest.models.*;
 
 
 
@@ -31,6 +31,21 @@ public class SensorResource {
         for (Sensor candidate : sensorService.fleet.sensors){
             if (candidate.chipId == chipId){
                 return candidate;
+            }
+        }
+        throw new NotFoundException("A sensor with that chip ID is not known.");
+    }
+
+    @Path("/{chipId}/config")
+    @GET
+    public SensorConfig sensor_config(@PathParam int chipId){
+        for (Sensor candidate : sensorService.fleet.sensors){
+            if (candidate.chipId == chipId){
+                if (candidate.config != null) {
+                    return candidate.config;
+                } else {
+                    throw new NotFoundException("The sensor has no configuration");
+                }
             }
         }
         throw new NotFoundException("A sensor with that chip ID is not known.");
