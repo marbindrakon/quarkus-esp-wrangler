@@ -1,6 +1,7 @@
 package gg.signal9.mqtttest.models;
 
 import javax.json.bind.annotation.JsonbProperty;
+import javax.json.bind.annotation.JsonbTransient;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
@@ -47,4 +48,7 @@ public class SensorConfig {
 
     @JsonbProperty("sensor_name")
     public String sensorName;
+
+    @JsonbTransient
+    public String desiredFirmware;
 }

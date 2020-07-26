@@ -36,8 +36,11 @@ public class ConfigWatcher implements Runnable {
     @ConfigProperty(name = "wrangler.config.root")
     String configRoot;
 
-    @ConfigProperty(name = "wrangler.sensor.baseurl")
+    @ConfigProperty(name = "wrangler.config.baseurl")
     String configBaseUrl;
+
+    @ConfigProperty(name = "wrangler.firmware.baseurl")
+    String configFwBaseUrl;
 
     @Inject
     ConnectionFactory connectionFactory;
@@ -92,6 +95,7 @@ public class ConfigWatcher implements Runnable {
         newConfig.mqttPort = Integer.parseInt(get_config_value(path, "mqtt_port"));
         newConfig.waterEnabled = Boolean.parseBoolean(get_config_value(path, "water_enabled"));
         newConfig.mqttTls = Boolean.parseBoolean(get_config_value(path, "mqtt_tls"));
+        newConfig.desiredFirmware = get_config_value(path, "desired_firmware");
         logger.info("Updating config for chipID " + sensor.chipId);
         sensor.config = newConfig;
     }
@@ -136,6 +140,18 @@ public class ConfigWatcher implements Runnable {
                     logger.info("Message " + commandMessage + " To: " + realTopic);
                     producer.send(context.createTopic(realTopic), commandMessage);
                     
+                }
+                if (!candidate.config.desiredFirmware.contains(candidate.status.fwVersion)){
+                    if (candidate.status.status == "upgrade"){
+                        continue;
+                    }
+                    logger.info("Updating Sensor " + candidate.chipId);
+                    candidate.status.status = "upgrade";
+                    String realTopic = candidate.status.commandTopic.replace('/', '.');
+                    String renderedUrl = String.format("%s/%s", configFwBaseUrl, candidate.config.desiredFirmware);
+                    String commandMessage = String.format("{\"chip_id\": %d, \"command\": \"get_firmware\", \"update_uri\": \"%s\"}", candidate.chipId, renderedUrl);
+                    logger.info("Message " + commandMessage + " To: " + realTopic);
+                    producer.send(context.createTopic(realTopic), commandMessage);
                 }
             }
         } catch (Exception ex) {

@@ -10,6 +10,9 @@ import javax.ws.rs.NotFoundException;
 
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
+import io.quarkus.qute.TemplateInstance;
+import io.quarkus.qute.Template;
+
 import gg.signal9.mqtttest.models.*;
 
 
@@ -19,12 +22,21 @@ import gg.signal9.mqtttest.models.*;
 public class SensorResource {
     @Inject
     SensorService sensorService;
+
+    @Inject
+    Template sensorMetrics;
  
     @GET
     public LinkedList<Sensor> sensor_list(){
         return sensorService.fleet.sensors;
     }
 
+    @Path("/readings")
+    @GET
+    public TemplateInstance readings(){
+        return sensorMetrics.data("fleet", sensorService.fleet.sensors);
+    }
+    
     @Path("/{chipId}")
     @GET
     public Sensor sensor(@PathParam int chipId){
