@@ -1,4 +1,4 @@
-package gg.signal9.mqtttest.models;
+package gg.signal9.quarkus_esp_wrangler.models;
 
 import java.util.Date;
 import javax.json.bind.annotation.JsonbProperty;

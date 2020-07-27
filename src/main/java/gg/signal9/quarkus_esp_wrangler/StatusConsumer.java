@@ -1,4 +1,4 @@
-package gg.signal9.mqtttest;
+package gg.signal9.quarkus_esp_wrangler;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,7 +20,7 @@ import javax.json.bind.JsonbBuilder;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 
-import gg.signal9.mqtttest.models.*;
+import gg.signal9.quarkus_esp_wrangler.models.*;
 
 @ApplicationScoped
 public class StatusConsumer implements Runnable {

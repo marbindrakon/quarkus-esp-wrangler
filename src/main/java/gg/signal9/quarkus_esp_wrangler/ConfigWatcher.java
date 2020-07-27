@@ -1,4 +1,4 @@
-package gg.signal9.mqtttest;
+package gg.signal9.quarkus_esp_wrangler;
 
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -25,7 +25,7 @@ import io.quarkus.runtime.StartupEvent;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import gg.signal9.mqtttest.models.*;
+import gg.signal9.quarkus_esp_wrangler.models.*;
 
 @ApplicationScoped
 public class ConfigWatcher implements Runnable {

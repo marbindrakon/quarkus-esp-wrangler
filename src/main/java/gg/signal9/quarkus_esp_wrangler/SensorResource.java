@@ -1,4 +1,4 @@
-package gg.signal9.mqtttest;
+package gg.signal9.quarkus_esp_wrangler;
 
 import java.util.LinkedList;
 import javax.inject.Inject;
@@ -13,7 +13,7 @@ import org.jboss.resteasy.annotations.jaxrs.PathParam;
 import io.quarkus.qute.TemplateInstance;
 import io.quarkus.qute.Template;
 
-import gg.signal9.mqtttest.models.*;
+import gg.signal9.quarkus_esp_wrangler.models.*;
 
 
 
