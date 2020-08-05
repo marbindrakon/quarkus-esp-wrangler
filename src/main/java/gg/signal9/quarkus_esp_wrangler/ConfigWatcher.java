@@ -1,13 +1,12 @@
 package gg.signal9.quarkus_esp_wrangler;
 
-import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
-import java.nio.file.*;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -24,6 +23,9 @@ import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
+import io.fabric8.kubernetes.api.model.ConfigMap;
 
 import gg.signal9.quarkus_esp_wrangler.models.*;
 
@@ -33,8 +35,11 @@ public class ConfigWatcher implements Runnable {
     @Inject
     SensorService sensorService;
 
-    @ConfigProperty(name = "wrangler.config.root")
-    String configRoot;
+    @Inject
+    KubernetesClient kubeClient;
+
+    @ConfigProperty(name = "wrangler.config.configmap")
+    String configMapName;
 
     @ConfigProperty(name = "wrangler.config.baseurl")
     String configBaseUrl;
@@ -47,6 +52,7 @@ public class ConfigWatcher implements Runnable {
  
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private Logger logger = Logger.getLogger("");
+    private Map<String,String> configData;
 
     void onStart(@Observes StartupEvent ev) {
         scheduler.scheduleWithFixedDelay(this, 0L, 10L, TimeUnit.SECONDS);
@@ -56,16 +62,12 @@ public class ConfigWatcher implements Runnable {
         scheduler.shutdown();
     }
 
-    public String get_config_value(Path path, String value) {
-        try{
-            Path targetPath = path.resolve(value);
-            String retVal = Files.readString(targetPath).trim();
-            return retVal;
-        } catch (IOException ex){
-            logger.info("Got IOException for value" + value);
-            return "";
-        } 
-        
+    public String get_config_value(int chipId, String value) {
+
+        String defaultKey = String.format("default_%s", value);
+        String chipKey = String.format("%d_%s", chipId, value);
+        String defaultValue = this.configData.getOrDefault(defaultKey, "");
+        return this.configData.getOrDefault(chipKey, defaultValue);
     }
 
     public String get_config_sha(SensorConfig subjectConfig) {
@@ -80,45 +82,57 @@ public class ConfigWatcher implements Runnable {
 		}
     }
 
-    public void update_from_path(Path path, Sensor sensor) {
+    public void update_config(Sensor sensor) {
         SensorConfig newConfig = new SensorConfig();
-        newConfig.hostname = get_config_value(path, "hostname");
-        newConfig.mqttBroker = get_config_value(path, "mqtt_broker");
-        newConfig.ntpServer = get_config_value(path, "ntp_server");
-        newConfig.wifiSsid = get_config_value(path, "wifi_ssid");
-        newConfig.wifiPassword = get_config_value(path, "wifi_password");
-        newConfig.zone = get_config_value(path, "zone");
-        newConfig.sensorName = get_config_value(path, "sensor_name");
-        newConfig.statusTopic = get_config_value(path, "status_topic");
-        newConfig.dataTopic = get_config_value(path, "data_topic");
-        newConfig.commandTopic = get_config_value(path, "command_topic");
-        newConfig.mqttPort = Integer.parseInt(get_config_value(path, "mqtt_port"));
-        newConfig.waterEnabled = Boolean.parseBoolean(get_config_value(path, "water_enabled"));
-        newConfig.mqttTls = Boolean.parseBoolean(get_config_value(path, "mqtt_tls"));
-        newConfig.desiredFirmware = get_config_value(path, "desired_firmware");
+        int chipId = sensor.chipId;
+        newConfig.hostname = get_config_value(chipId, "hostname");
+        newConfig.mqttBroker = get_config_value(chipId, "mqtt_broker");
+        newConfig.ntpServer = get_config_value(chipId, "ntp_server");
+        newConfig.wifiSsid = get_config_value(chipId, "wifi_ssid");
+        newConfig.wifiPassword = get_config_value(chipId, "wifi_password");
+        newConfig.zone = get_config_value(chipId, "zone");
+        newConfig.sensorName = get_config_value(chipId, "sensor_name");
+        newConfig.statusTopic = get_config_value(chipId, "status_topic");
+        newConfig.dataTopic = get_config_value(chipId, "data_topic");
+        newConfig.commandTopic = get_config_value(chipId, "command_topic");
+        newConfig.mqttPort = Integer.parseInt(get_config_value(chipId, "mqtt_port"));
+        newConfig.waterEnabled = Boolean.parseBoolean(get_config_value(chipId, "water_enabled"));
+        newConfig.mqttTls = Boolean.parseBoolean(get_config_value(chipId, "mqtt_tls"));
+        newConfig.desiredFirmware = get_config_value(chipId, "desired_firmware");
         logger.info("Updating config for chipID " + sensor.chipId);
         sensor.config = newConfig;
     }
 
+    private void read_config() {
+        logger.info("Reading ConfigMap");
+        ConfigMap sensorConfig = null;
+        try {
+            sensorConfig = kubeClient.configMaps().withName(configMapName).get();
+        } catch (KubernetesClientException ex){
+            logger.info(ex.toString());
+            return;
+        }
+        if (sensorConfig == null) {
+            logger.info("ConfigMap not found!");
+        } else {
+            this.configData = sensorConfig.getData();
+            if (configData != null){
+                for (Sensor sensor : sensorService.fleet.sensors){
+                    update_config(sensor);
+                }    
+            } else {
+                logger.info("ConfigMap data was null!");
+            }   
+        }
+    }
+
     @Override
     public void run() {
-        Path configRootPath = Paths.get(configRoot);
+        read_config();
+        ensure_config();
+    }
 
-        logger.info("Starting config filesystem sync");
-        logger.info("Config Path " + configRoot);
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(configRootPath)) {
-            for (Path file: stream) {
-                for (Sensor candidate : sensorService.fleet.sensors){
-                    if (candidate.chipId == Integer.parseInt(file.getFileName().toString())){
-                        update_from_path(file, candidate);
-                    }
-                }
-            }
-        } catch (IOException | DirectoryIteratorException x) {
-            // IOException can never be thrown by the iteration.
-            // In this snippet, it can only be thrown by newDirectoryStream.
-            System.err.println(x);
-        }
+    private void ensure_config() {
         logger.info("Ensuring configuration states");
         try (JMSContext context = connectionFactory.createContext(Session.AUTO_ACKNOWLEDGE)){
             context.setClientID("wrangler-config-producer");
