@@ -49,6 +49,9 @@ public class SensorConfig {
     @JsonbProperty("sensor_name")
     public String sensorName;
 
+    @JsonbProperty("area")
+    public String area;
+
     @JsonbTransient
     public String desiredFirmware;
 }
