@@ -82,7 +82,7 @@ public class DataConsumer implements Runnable {
             Message message = consumer.receive();
             if (message != null) {
                 Jsonb jsonb = JsonbBuilder.create();
-                String msgBody;
+                String msgBody = "";
 				try {
                     msgBody = new String(message.getBody(byte[].class));
                     SensorData newData = jsonb.fromJson(msgBody, SensorData.class);
