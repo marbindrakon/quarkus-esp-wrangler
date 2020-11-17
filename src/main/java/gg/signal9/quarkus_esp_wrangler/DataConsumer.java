@@ -87,9 +87,9 @@ public class DataConsumer implements Runnable {
                     msgBody = new String(message.getBody(byte[].class));
                     SensorData newData = jsonb.fromJson(msgBody, SensorData.class);
                     update_sensor_reading(newData);
-				} catch (JMSException e) {
-                    logger.info("Caught JMSException running getBody");
-                    logger.info(e.toString());
+				} catch (Exception e) {
+                    logger.info("Caught Exception running getBody");
+                    logger.info(e.getMessage());
 				}
 
             }
