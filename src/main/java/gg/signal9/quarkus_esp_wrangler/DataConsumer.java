@@ -90,6 +90,7 @@ public class DataConsumer implements Runnable {
 				} catch (Exception e) {
                     logger.info("Caught Exception running getBody");
                     logger.info(e.getMessage());
+		    logger.info("Data: " + msgBody);
 				}
 
             }
