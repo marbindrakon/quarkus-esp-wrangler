@@ -2,26 +2,26 @@
 # TYPE wrangler_sensor_temperature gauge
 {#for sensor in fleet}
 {#if sensor.currentReading}
-wrangler_sensor_temperature \{sensor_name="{sensor.status.sensorName}", zone="{sensor.status.zone}", chip_id="{sensor.chipId}"\} {sensor.currentReading.temperature}
+wrangler_sensor_temperature \{area="{sensor.status.area}", sensor_name="{sensor.status.sensorName}", zone="{sensor.status.zone}", chip_id="{sensor.chipId}"\} {sensor.currentReading.temperature}
 {/if}
 {/for}
 # HELP wrangler_sensor_humidity The current sensor humidity in percent
 # TYPE wrangler_sensor_humidity gauge
 {#for sensor in fleet}
 {#if sensor.currentReading}
-wrangler_sensor_humidity \{sensor_name="{sensor.status.sensorName}", zone="{sensor.status.zone}", chip_id="{sensor.chipId}"\} {sensor.currentReading.humidity}
+wrangler_sensor_humidity \{area="{sensor.status.area}", sensor_name="{sensor.status.sensorName}", zone="{sensor.status.zone}", chip_id="{sensor.chipId}"\} {sensor.currentReading.humidity}
 {/if}
 {/for}
 # HELP wrangler_sensor_status The current status of the sensor. Returns 0 if offline, 1 if in transition, 2 if alive
 # TYPE wrangler_sensor_status gauge
 {#for sensor in fleet}
 {#if sensor.status.status == "alive"}
-wrangler_sensor_status \{sensor_name="{sensor.status.sensorName}", zone="{sensor.status.zone}", chip_id="{sensor.chipId}"\} 2
+wrangler_sensor_status \{area="{sensor.status.area}", sensor_name="{sensor.status.sensorName}", zone="{sensor.status.zone}", chip_id="{sensor.chipId}"\} 2
 {#else if sensor.status.status == "reconfigure"}
-wrangler_sensor_status \{sensor_name="{sensor.status.sensorName}", zone="{sensor.status.zone}", chip_id="{sensor.chipId}"\} 1
+wrangler_sensor_status \{area="{sensor.status.area}", sensor_name="{sensor.status.sensorName}", zone="{sensor.status.zone}", chip_id="{sensor.chipId}"\} 1
 {#else if sensor.status.status == "upgrade"}
-wrangler_sensor_status \{sensor_name="{sensor.status.sensorName}", zone="{sensor.status.zone}", chip_id="{sensor.chipId}"\} 1
+wrangler_sensor_status \{area="{sensor.status.area}", sensor_name="{sensor.status.sensorName}", zone="{sensor.status.zone}", chip_id="{sensor.chipId}"\} 1
 {#else}
-wrangler_sensor_status \{sensor_name="{sensor.status.sensorName}", zone="{sensor.status.zone}", chip_id="{sensor.chipId}"\} 0
+wrangler_sensor_status \{area="{sensor.status.area}", sensor_name="{sensor.status.sensorName}", zone="{sensor.status.zone}", chip_id="{sensor.chipId}"\} 0
 {/if}
 {/for}

@@ -99,6 +99,7 @@ public class ConfigWatcher implements Runnable {
         newConfig.waterEnabled = Boolean.parseBoolean(get_config_value(chipId, "water_enabled"));
         newConfig.mqttTls = Boolean.parseBoolean(get_config_value(chipId, "mqtt_tls"));
         newConfig.desiredFirmware = get_config_value(chipId, "desired_firmware");
+        newConfig.area = get_config_value(chipId, "area");
         logger.info("Updating config for chipID " + sensor.chipId);
         sensor.config = newConfig;
     }
@@ -138,7 +139,7 @@ public class ConfigWatcher implements Runnable {
             context.setClientID("wrangler-config-producer");
             JMSProducer producer = context.createProducer();
             for (Sensor candidate : sensorService.fleet.sensors){
-                if (candidate.status.status == "reconfigure"){
+                if (candidate.status.status == "reconfigure" || candidate.status.status == "upgrade"){
                     continue;
                 }
                 if (candidate.config == null){
@@ -156,7 +157,7 @@ public class ConfigWatcher implements Runnable {
                     
                 }
                 if (!candidate.config.desiredFirmware.contains(candidate.status.fwVersion)){
-                    if (candidate.status.status == "upgrade"){
+                    if (candidate.status.status == "upgrade" || candidate.status.status == "reconfigure"){
                         continue;
                     }
                     logger.info("Updating Sensor " + candidate.chipId);

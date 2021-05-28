@@ -13,6 +13,9 @@ public class SensorStatus {
     @JsonbProperty("chip_id")
     public int chipId;
 
+    @JsonbProperty("area")
+    public String area;
+
     @JsonbProperty("zone")
     public String zone;
 
