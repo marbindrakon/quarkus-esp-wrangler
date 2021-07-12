@@ -29,13 +29,13 @@ public class StatusConsumer implements Runnable,MqttCallback {
     @Inject
     SensorService sensorService;
 
-    @ConfigProperty(name = "mqtt.broker.url")
+    @ConfigProperty(name = "wrangler.broker.url")
     String mqttBrokerUrl;
 
-    @ConfigProperty(name = "mqtt.broker.clientIdPrefix")
+    @ConfigProperty(name = "wrangler.broker.clientIdPrefix")
     String mqttClientIdPrefix;
 
-    String mqttClientId = mqttClientIdPrefix + "-data-consumer";
+    String mqttClientId = mqttClientIdPrefix + "-status-consumer";
     MemoryPersistence mqttPersistence = new MemoryPersistence();
 
     private final ExecutorService scheduler = Executors.newSingleThreadExecutor();

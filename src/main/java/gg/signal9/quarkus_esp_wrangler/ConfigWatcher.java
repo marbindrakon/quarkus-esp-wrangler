@@ -48,10 +48,10 @@ public class ConfigWatcher implements Runnable {
     @ConfigProperty(name = "wrangler.firmware.baseurl")
     String configFwBaseUrl;
 
-    @ConfigProperty(name = "mqtt.broker.url")
+    @ConfigProperty(name = "wrangler.broker.url")
     String mqttBrokerUrl;
 
-    @ConfigProperty(name = "mqtt.broker.clientIdPrefix")
+    @ConfigProperty(name = "wrangler.broker.clientIdPrefix")
     String mqttClientIdPrefix;
 
     String mqttClientId = mqttClientIdPrefix + "-config";

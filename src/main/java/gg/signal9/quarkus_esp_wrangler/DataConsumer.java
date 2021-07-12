@@ -37,10 +37,10 @@ public class DataConsumer implements Runnable,MqttCallback {
     @RegistryType(type = MetricRegistry.Type.APPLICATION)
     MetricRegistry registry;
 
-    @ConfigProperty(name = "mqtt.broker.url")
+    @ConfigProperty(name = "wrangler.broker.url")
     String mqttBrokerUrl;
 
-    @ConfigProperty(name = "mqtt.broker.clientIdPrefix")
+    @ConfigProperty(name = "wrangler.broker.clientIdPrefix")
     String mqttClientIdPrefix;
 
     String mqttClientId = mqttClientIdPrefix + "-data-consumer";
