@@ -44,7 +44,6 @@ public class DataConsumer implements Runnable,MqttCallback {
     @ConfigProperty(name = "wrangler.broker.clientIdPrefix")
     String mqttClientIdPrefix;
 
-    String mqttClientId = mqttClientIdPrefix.concat("-data-consumer");
     MemoryPersistence mqttPersistence = new MemoryPersistence();
 
     private final ExecutorService scheduler = Executors.newSingleThreadExecutor();
@@ -105,6 +104,10 @@ public class DataConsumer implements Runnable,MqttCallback {
     @Override
     public void run() {
         try {
+            String mqttClientId = "default-data-consumer";
+            if (mqttClientIdPrefix != null) {
+                mqttClientId = mqttClientIdPrefix.concat("-data-consumer");
+            }
             MqttClient mqttClient = new MqttClient(mqttBrokerUrl, mqttClientId, mqttPersistence);
             mqttClient.setCallback(this);
             MqttConnectOptions connOpts = new MqttConnectOptions();

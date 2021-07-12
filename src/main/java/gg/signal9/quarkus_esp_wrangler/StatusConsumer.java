@@ -36,7 +36,6 @@ public class StatusConsumer implements Runnable,MqttCallback {
     @ConfigProperty(name = "wrangler.broker.clientIdPrefix")
     String mqttClientIdPrefix;
 
-    String mqttClientId = mqttClientIdPrefix.concat("-status-consumer");
     MemoryPersistence mqttPersistence = new MemoryPersistence();
 
     private final ExecutorService scheduler = Executors.newSingleThreadExecutor();
@@ -91,6 +90,10 @@ public class StatusConsumer implements Runnable,MqttCallback {
     @Override
     public void run() {
         try {
+            String mqttClientId = "default-status-consumer";
+            if (mqttClientIdPrefix != null) {
+                mqttClientId = mqttClientIdPrefix.concat("-status-consumer");
+            }
             MqttClient mqttClient = new MqttClient(mqttBrokerUrl, mqttClientId, mqttPersistence);
             mqttClient.setCallback(this);
             MqttConnectOptions connOpts = new MqttConnectOptions();
