@@ -10,14 +10,15 @@ import java.util.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
-import javax.jms.ConnectionFactory;
-import javax.jms.JMSContext;
-import javax.jms.JMSProducer;
-import javax.jms.Session;
 import javax.xml.bind.DatatypeConverter;
 import javax.inject.Inject;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
+
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
@@ -47,9 +48,15 @@ public class ConfigWatcher implements Runnable {
     @ConfigProperty(name = "wrangler.firmware.baseurl")
     String configFwBaseUrl;
 
-    @Inject
-    ConnectionFactory connectionFactory;
- 
+    @ConfigProperty(name = "mqtt.broker.url")
+    String mqttBrokerUrl;
+
+    @ConfigProperty(name = "mqtt.broker.clientIdPrefix")
+    String mqttClientIdPrefix;
+
+    String mqttClientId = mqttClientIdPrefix + "-config";
+    MemoryPersistence mqttPersistence = new MemoryPersistence();
+
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private Logger logger = Logger.getLogger("");
     private Map<String,String> configData;
@@ -135,9 +142,11 @@ public class ConfigWatcher implements Runnable {
 
     private void ensure_config() {
         logger.info("Ensuring configuration states");
-        try (JMSContext context = connectionFactory.createContext(Session.AUTO_ACKNOWLEDGE)){
-            context.setClientID("wrangler-config-producer");
-            JMSProducer producer = context.createProducer();
+        try {
+            MqttClient mqttClient = new MqttClient(mqttBrokerUrl, mqttClientId, mqttPersistence);
+            MqttConnectOptions connOpts = new MqttConnectOptions();
+            connOpts.setCleanSession(true);
+            mqttClient.connect(connOpts);
             for (Sensor candidate : sensorService.fleet.sensors){
                 if (candidate.status.status == "reconfigure" || candidate.status.status == "upgrade"){
                     continue;
@@ -153,8 +162,9 @@ public class ConfigWatcher implements Runnable {
                     String renderedUrl = String.format("%s/sensor/%d/config", configBaseUrl, candidate.chipId);
                     String commandMessage = String.format("{\"chip_id\": %d, \"command\": \"get_config\", \"config_uri\": \"%s\"}", candidate.chipId, renderedUrl);
                     logger.info("Message " + commandMessage + " To: " + realTopic);
-                    producer.send(context.createTopic(realTopic), commandMessage);
-                    
+                    MqttMessage message = new MqttMessage(commandMessage.getBytes());
+                    message.setQos(2);
+                    mqttClient.publish(realTopic, message);
                 }
                 if (!candidate.config.desiredFirmware.contains(candidate.status.fwVersion)){
                     if (candidate.status.status == "upgrade" || candidate.status.status == "reconfigure"){
@@ -166,9 +176,12 @@ public class ConfigWatcher implements Runnable {
                     String renderedUrl = String.format("%s/%s", configFwBaseUrl, candidate.config.desiredFirmware);
                     String commandMessage = String.format("{\"chip_id\": %d, \"command\": \"get_firmware\", \"update_uri\": \"%s\"}", candidate.chipId, renderedUrl);
                     logger.info("Message " + commandMessage + " To: " + realTopic);
-                    producer.send(context.createTopic(realTopic), commandMessage);
+                    MqttMessage message = new MqttMessage(commandMessage.getBytes());
+                    message.setQos(2);
+                    mqttClient.publish(realTopic, message);
                 }
             }
+            mqttClient.disconnect();
         } catch (Exception ex) {
             logger.info("Got Exception " + ex.toString());
         }

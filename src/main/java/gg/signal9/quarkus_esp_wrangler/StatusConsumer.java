@@ -3,19 +3,20 @@ package gg.signal9.quarkus_esp_wrangler;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
-//import java.util.LinkedList;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
-import javax.jms.ConnectionFactory;
-import javax.jms.JMSConsumer;
-import javax.jms.JMSContext;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.Session;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
@@ -23,13 +24,19 @@ import io.quarkus.runtime.StartupEvent;
 import gg.signal9.quarkus_esp_wrangler.models.*;
 
 @ApplicationScoped
-public class StatusConsumer implements Runnable {
+public class StatusConsumer implements Runnable,MqttCallback {
 
     @Inject
-    ConnectionFactory connectionFactory;
-    
-    @Inject
     SensorService sensorService;
+
+    @ConfigProperty(name = "mqtt.broker.url")
+    String mqttBrokerUrl;
+
+    @ConfigProperty(name = "mqtt.broker.clientIdPrefix")
+    String mqttClientIdPrefix;
+
+    String mqttClientId = mqttClientIdPrefix + "-data-consumer";
+    MemoryPersistence mqttPersistence = new MemoryPersistence();
 
     private final ExecutorService scheduler = Executors.newSingleThreadExecutor();
     private Logger logger = Logger.getLogger("");
@@ -55,32 +62,42 @@ public class StatusConsumer implements Runnable {
         newSensor.status = newStatus;
         sensorService.fleet.sensors.add(newSensor);
     }
+
+    @Override
+    public void connectionLost(Throwable thrwbl) {
+        logger.info("StatusConsumer lost connection");
+    }
+
+    @Override
+    public void deliveryComplete(IMqttDeliveryToken imdt) {
+
+    }
+ 
+    @Override
+    public void messageArrived(String topic, MqttMessage message) throws Exception{
+        Jsonb jsonb = JsonbBuilder.create();
+        String msgBody = message.toString();
+        try {
+            SensorStatus newStatus = jsonb.fromJson(msgBody, SensorStatus.class);
+            update_sensor_status(newStatus);
+        } catch (Exception e) {
+            logger.info("Caught Exception running getBody");
+            logger.info(e.getMessage());
+	    logger.info("Data: " + msgBody);
+        }
+    }
+
     @Override
     public void run() {
-
-        JMSContext context = connectionFactory.createContext(Session.AUTO_ACKNOWLEDGE);
-        context.setClientID("wrangler-status-consumer");
-        logger.info("Initialized JMS conext.");
-        JMSConsumer consumer = context.createConsumer(context.createQueue("sensors.*.sensor_status"));
-        context.start();
-        logger.info("Started connection");
-        logger.info("Client ID: " + context.getClientID());
-        while (true) {
-            Message message = consumer.receive();
-            if (message != null) {
-                //logger.info("Got mew status message");
-                Jsonb jsonb = JsonbBuilder.create();
-                String msgBody;
-				try {
-                    msgBody = new String(message.getBody(byte[].class));
-                    SensorStatus newStatus = jsonb.fromJson(msgBody, SensorStatus.class);
-                    update_sensor_status(newStatus);
-				} catch (JMSException e) {
-                    logger.info("Caught JMSException running getBody");
-                    logger.info(e.toString());
-				}
-
-            }
+        try {
+            MqttClient mqttClient = new MqttClient(mqttBrokerUrl, mqttClientId, mqttPersistence);
+            mqttClient.setCallback(this);
+            MqttConnectOptions connOpts = new MqttConnectOptions();
+            connOpts.setCleanSession(true);
+            mqttClient.connect(connOpts);
+            mqttClient.subscribe("sensors.*.sensor_status", 2);
+        } catch (Exception ex) {
+            logger.info("Got exception in DataConsumer");
         }
     }
 }
