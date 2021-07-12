@@ -113,7 +113,7 @@ public class DataConsumer implements Runnable,MqttCallback {
             MqttConnectOptions connOpts = new MqttConnectOptions();
             connOpts.setCleanSession(true);
             mqttClient.connect(connOpts);
-            mqttClient.subscribe("sensors.*.data", 2);
+            mqttClient.subscribe("sensors/+/data", 2);
             Quarkus.waitForExit();
             mqttClient.disconnect();
         } catch (Exception ex) {

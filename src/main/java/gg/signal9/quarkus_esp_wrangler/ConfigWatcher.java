@@ -161,7 +161,7 @@ public class ConfigWatcher implements Runnable {
                     logger.info("Reconfiguring Sensor " + candidate.chipId);
                     logger.info("Desired: " + get_config_sha(candidate.config) + " Actual: " + candidate.status.configHash);
                     candidate.status.status = "reconfigure";
-                    String realTopic = candidate.status.commandTopic.replace('/', '.');
+                    String realTopic = candidate.status.commandTopic;
                     String renderedUrl = String.format("%s/sensor/%d/config", configBaseUrl, candidate.chipId);
                     String commandMessage = String.format("{\"chip_id\": %d, \"command\": \"get_config\", \"config_uri\": \"%s\"}", candidate.chipId, renderedUrl);
                     logger.info("Message " + commandMessage + " To: " + realTopic);
@@ -175,7 +175,7 @@ public class ConfigWatcher implements Runnable {
                     }
                     logger.info("Updating Sensor " + candidate.chipId);
                     candidate.status.status = "upgrade";
-                    String realTopic = candidate.status.commandTopic.replace('/', '.');
+                    String realTopic = candidate.status.commandTopic;
                     String renderedUrl = String.format("%s/%s", configFwBaseUrl, candidate.config.desiredFirmware);
                     String commandMessage = String.format("{\"chip_id\": %d, \"command\": \"get_firmware\", \"update_uri\": \"%s\"}", candidate.chipId, renderedUrl);
                     logger.info("Message " + commandMessage + " To: " + realTopic);

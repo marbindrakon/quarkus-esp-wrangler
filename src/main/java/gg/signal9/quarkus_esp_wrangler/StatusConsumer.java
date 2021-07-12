@@ -99,7 +99,7 @@ public class StatusConsumer implements Runnable,MqttCallback {
             MqttConnectOptions connOpts = new MqttConnectOptions();
             connOpts.setCleanSession(true);
             mqttClient.connect(connOpts);
-            mqttClient.subscribe("sensors.*.sensor_status", 2);
+            mqttClient.subscribe("sensors/+/sensor_status", 2);
             Quarkus.waitForExit();
             mqttClient.disconnect();
         } catch (Exception ex) {
