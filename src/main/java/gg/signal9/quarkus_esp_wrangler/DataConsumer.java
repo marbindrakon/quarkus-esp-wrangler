@@ -22,6 +22,7 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
+import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 
@@ -43,7 +44,7 @@ public class DataConsumer implements Runnable,MqttCallback {
     @ConfigProperty(name = "wrangler.broker.clientIdPrefix")
     String mqttClientIdPrefix;
 
-    String mqttClientId = mqttClientIdPrefix + "-data-consumer";
+    String mqttClientId = mqttClientIdPrefix.concat("-data-consumer");
     MemoryPersistence mqttPersistence = new MemoryPersistence();
 
     private final ExecutorService scheduler = Executors.newSingleThreadExecutor();
@@ -110,6 +111,8 @@ public class DataConsumer implements Runnable,MqttCallback {
             connOpts.setCleanSession(true);
             mqttClient.connect(connOpts);
             mqttClient.subscribe("sensors.*.data", 2);
+            Quarkus.waitForExit();
+            mqttClient.disconnect();
         } catch (Exception ex) {
             logger.info("Got exception in DataConsumer");
         }

@@ -54,7 +54,7 @@ public class ConfigWatcher implements Runnable {
     @ConfigProperty(name = "wrangler.broker.clientIdPrefix")
     String mqttClientIdPrefix;
 
-    String mqttClientId = mqttClientIdPrefix + "-config";
+    String mqttClientId = mqttClientIdPrefix.concat("-config");
     MemoryPersistence mqttPersistence = new MemoryPersistence();
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
