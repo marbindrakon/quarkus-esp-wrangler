@@ -119,7 +119,7 @@ public class DataConsumer implements Runnable,MqttCallback {
             MqttConnectOptions connOpts = new MqttConnectOptions();
             connOpts.setCleanSession(true);
             connOpts.setUserName(mqttBrokerUsername);
-            connOpts.setPassword(mqttBrokerPassword);
+            connOpts.setPassword(mqttBrokerPassword.toCharArray());
             mqttClient.connect(connOpts);
             mqttClient.subscribe("sensors/+/data", 2);
             Quarkus.waitForExit();

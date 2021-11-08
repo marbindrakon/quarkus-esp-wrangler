@@ -156,7 +156,7 @@ public class ConfigWatcher implements Runnable {
             MqttConnectOptions connOpts = new MqttConnectOptions();
             connOpts.setCleanSession(true);
             connOpts.setUserName(mqttBrokerUsername);
-            connOpts.setPassword(mqttBrokerPassword);
+            connOpts.setPassword(mqttBrokerPassword.toCharArray());
             mqttClient.connect(connOpts);
             for (Sensor candidate : sensorService.fleet.sensors){
                 if (candidate.status.status == "reconfigure" || candidate.status.status == "upgrade"){
