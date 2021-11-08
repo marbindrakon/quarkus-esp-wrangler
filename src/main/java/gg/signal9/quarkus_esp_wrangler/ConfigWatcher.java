@@ -51,6 +51,12 @@ public class ConfigWatcher implements Runnable {
     @ConfigProperty(name = "wrangler.broker.url")
     String mqttBrokerUrl;
 
+    @ConfigProperty(name = "wrangler.broker.username")
+    String mqttBrokerUsername;
+
+    @ConfigProperty(name = "wrangler.broker.password")
+    String mqttBrokerPassword;
+
     @ConfigProperty(name = "wrangler.broker.clientIdPrefix")
     String mqttClientIdPrefix;
 
@@ -149,6 +155,8 @@ public class ConfigWatcher implements Runnable {
             MqttClient mqttClient = new MqttClient(mqttBrokerUrl, mqttClientId, mqttPersistence);
             MqttConnectOptions connOpts = new MqttConnectOptions();
             connOpts.setCleanSession(true);
+            connOpts.setUserName(mqttBrokerUsername);
+            connOpts.setPassword(mqttBrokerPassword);
             mqttClient.connect(connOpts);
             for (Sensor candidate : sensorService.fleet.sensors){
                 if (candidate.status.status == "reconfigure" || candidate.status.status == "upgrade"){

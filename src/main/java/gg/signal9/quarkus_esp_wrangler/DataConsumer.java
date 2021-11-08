@@ -41,6 +41,12 @@ public class DataConsumer implements Runnable,MqttCallback {
     @ConfigProperty(name = "wrangler.broker.url")
     String mqttBrokerUrl;
 
+    @ConfigProperty(name = "wrangler.broker.username")
+    String mqttBrokerUsername;
+
+    @ConfigProperty(name = "wrangler.broker.password")
+    String mqttBrokerPassword;
+
     @ConfigProperty(name = "wrangler.broker.clientIdPrefix")
     String mqttClientIdPrefix;
 
@@ -112,6 +118,8 @@ public class DataConsumer implements Runnable,MqttCallback {
             mqttClient.setCallback(this);
             MqttConnectOptions connOpts = new MqttConnectOptions();
             connOpts.setCleanSession(true);
+            connOpts.setUserName(mqttBrokerUsername);
+            connOpts.setPassword(mqttBrokerPassword);
             mqttClient.connect(connOpts);
             mqttClient.subscribe("sensors/+/data", 2);
             Quarkus.waitForExit();
